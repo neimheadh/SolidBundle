@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# This file is part of the NeimheadhSolid Bundle.
+#
+# (c) 2023 - present  Mathieu Wambre <contact@neimheadh.fr>
+#
+# For the full copyright and license information, please read the LICENSE
+# file that was distributed with this source code.
+
+set -e
+
+ARGS=""
+
+while [ $# -gt 0 ]; do
+  case $1 in
+    -h|--help)
+      echo "Execute bundle tests."
+      exit
+      ;;
+    *)
+      ARGS="$ARGS $1"
+      ;;
+  esac
+  shift
+done
+
+set -x
+docker-compose up -d
+docker-compose exec php rm -Rf tests/var/cache
+docker-compose exec php ./vendor/bin/phpunit --coverage-html logs/coverage $ARGS

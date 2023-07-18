@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<phpunit
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        backupGlobals="false"
+        backupStaticAttributes="false"
+        colors="true"
+        convertErrorsToExceptions="true"
+        convertNoticesToExceptions="true"
+        convertWarningsToExceptions="true"
+        convertDeprecationsToExceptions="true"
+        processIsolation="false"
+        stopOnFailure="false"
+        bootstrap="./vendor/autoload.php"
+        xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd"
+>
+    <php>
+        <env name="KERNEL_CLASS" value="Neimheadh\SolidBundle\Tests\Kernel" force="true"/>
+    </php>
+
+    <coverage>
+        <include>
+            <directory>./src/</directory>
+        </include>
+        <exclude>
+            <directory>./vendor</directory>
+            <directory>./tests</directory>
+        </exclude>
+    </coverage>
+
+    <testsuites>
+        <testsuite name="SolidBundle Test Suite">
+            <directory>./tests/src</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>
