@@ -33,8 +33,8 @@ class SolidMetadataDriver implements MappingDriver
      * @param MappingDriver $driver Base driver.
      */
     public function __construct(
-        private array $config,
-        private MappingDriver $driver
+        private readonly array $config,
+        private readonly MappingDriver $driver
     ) {
     }
 

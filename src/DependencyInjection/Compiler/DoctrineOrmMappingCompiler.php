@@ -16,6 +16,8 @@ use Exception;
 use Neimheadh\SolidBundle\DependencyInjection\NeimheadhSolidExtension;
 use Neimheadh\SolidBundle\Doctrine\Mapping\Driver\SolidMetadataDriver;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
+use Symfony\Component\DependencyInjection\Compiler\PassConfig;
+use Symfony\Component\DependencyInjection\Compiler\ResolveParameterPlaceHoldersPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 
@@ -51,25 +53,48 @@ class DoctrineOrmMappingCompiler implements CompilerPassInterface
         $doctrine = $container->get('doctrine');
         $managers = $doctrine->getManagerNames();
 
-        foreach ($managers as $name => $manager) {
-            $driver = sprintf('doctrine.orm.%s_metadata_driver', $name);
+        // We replace drivers for configured manager with SolidMetadataDriver.
+        foreach (array_keys($managers) as $connectionName) {
+            $metadataDriverName = sprintf(
+                'doctrine.orm.%s_metadata_driver',
+                $connectionName,
+            );
 
-            if ($container->has($driver)) {
-                /** @var MappingDriverChain $service */
-                $definition = $container->getDefinition($driver);
+            if ($container->has($metadataDriverName)) {
+                $definition = $container->getDefinition($metadataDriverName);
+                $class = $container->getParameterBag()->resolveValue(
+                    $definition->getClass(),
+                );
 
-                foreach ($definition->getMethodCalls() as $call) {
-                    if ($call[0] === 'addDriver') {
-                        $definition->removeMethodCall($call[0]);
-                        $definition->addMethodCall('addDriver', [
-                            new Definition(SolidMetadataDriver::class, [
+                // SolidMetadataDriver replace drivers added on mapping driver
+                // chain. If the driver definition is not a MappingDriverChain,
+                // we pass.
+                if ($class !== MappingDriverChain::class
+                    && !in_array(
+                        MappingDriverChain::class,
+                        class_parents($class),
+                    )
+                ) {
+                    continue;
+                }
+
+                // We replace the addDriver $nestedDriver parameter with a
+                // SolidMetadataDriver.
+                $calls = $definition->getMethodCalls();
+                foreach ($calls as &$call) {
+                    [$method, &$parameters] = $call;
+
+                    if ($method === 'addDriver') {
+                        $parameters[0] = new Definition(
+                            SolidMetadataDriver::class, [
                                 $config,
-                                $call[1][0],
-                            ]),
-                            $call[1][1],
-                        ]);
+                                $parameters[0],
+                            ],
+                        );
                     }
                 }
+
+                $definition->setMethodCalls($calls);
             }
         }
     }

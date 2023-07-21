@@ -10,9 +10,11 @@
 
 namespace Neimheadh\SolidBundle\Tests;
 
+use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
 use Exception;
 use Neimheadh\SolidBundle\Tests\DependencyInjection\Compiler\TestContainerCompiler;
 use PSS\SymfonyMockerContainer\DependencyInjection\MockerContainer;
+use Sonata\UserBundle\SonataUserBundle;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\Compiler\PassConfig;
@@ -61,6 +63,20 @@ class Kernel extends NoDoctrineKernel
 
     /**
      * {@inheritDoc}
+     */
+    public function registerBundles(): iterable
+    {
+        return array_merge(
+            (array)parent::registerBundles(),
+            [
+                new DoctrineBundle(),
+                new SonataUserBundle(),
+            ],
+        );
+    }
+
+    /**
+     * {@inheritDoc}
      *
      * @throws Exception
      */
@@ -90,6 +106,15 @@ class Kernel extends NoDoctrineKernel
                         ],
                     ],
                 ],
+            ]);
+
+            $container->loadFromExtension('sonata_user', [
+                'resetting' => [
+                    'email' => [
+                        'address' => 'debian@localhost',
+                        'sender_name' => 'Sonata Admin',
+                    ],
+                ]
             ]);
 
             $container->addCompilerPass(new TestContainerCompiler(

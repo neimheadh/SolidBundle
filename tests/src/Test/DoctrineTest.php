@@ -23,6 +23,7 @@ use Exception;
 use Neimheadh\SolidBundle\Doctrine\EventListener\Date\CreatedEntityListener;
 use Neimheadh\SolidBundle\Doctrine\EventListener\Date\UpdatedEntityListener;
 use Neimheadh\SolidBundle\Tests\Entity\GenericEntity;
+use Sonata\UserBundle\Entity\BaseUser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
@@ -168,10 +169,6 @@ class DoctrineTest extends WebTestCase
     {
         $container = static::getContainer();
 
-        /** @var AttributeDriver $doctrineDriver */
-        $doctrineDriver = $container->get(
-            'doctrine.orm.default_attribute_metadata_driver'
-        );
         /** @var MappingDriver $metadataDriver */
         $metadataDriver = $container->get(
             'doctrine.orm.default_metadata_driver'
@@ -180,13 +177,16 @@ class DoctrineTest extends WebTestCase
         // We check doctrine & mapping drivers meta-methods have the same
         // behavior.
         $this->assertSame(
-            $doctrineDriver->getAllClassNames(),
+            [
+                GenericEntity::class,
+                BaseUser::class,
+            ],
             $metadataDriver->getAllClassNames(),
         );
 
         foreach ($metadataDriver->getAllClassNames() as $className) {
             $this->assertSame(
-                $doctrineDriver->isTransient($className),
+                false,
                 $metadataDriver->isTransient($className),
             );
         }
