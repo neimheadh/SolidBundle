@@ -117,7 +117,7 @@ class SolidMetadataDriver implements MappingDriver
 
                 if (!$metadata->hasField($fieldName)) {
                     $metadata->fieldMappings[$fieldName] = $fieldConfig;
-                    $metadata->fieldNames[] = $fieldName;
+                    $metadata->fieldNames[$fieldName] = $fieldName;
                 }
             }
         }
