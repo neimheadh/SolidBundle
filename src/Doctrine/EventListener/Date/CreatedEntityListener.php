@@ -18,7 +18,7 @@ use Neimheadh\SolidBundle\Doctrine\Entity\Date\CreatedEntityInterface;
  *
  * @author Mathieu Wambre <contact@neimheadh.fr>
  */
-class CreatedEntityListener
+final class CreatedEntityListener
 {
 
     /**

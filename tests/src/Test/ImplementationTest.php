@@ -17,7 +17,9 @@ use Doctrine\Persistence\Mapping\Driver\StaticPHPDriver;
 use Exception;
 use Neimheadh\SolidBundle\DependencyInjection\Compiler\DoctrineOrmMappingCompiler;
 use Neimheadh\SolidBundle\Tests\Doctrine\FakeMappingDriver;
+use Neimheadh\SolidBundle\Tests\Entity\DefaultOverrideEntity;
 use Neimheadh\SolidBundle\Tests\Entity\GenericEntity;
+use Neimheadh\SolidBundle\Tests\Entity\OwnerEntity;
 use Neimheadh\SolidBundle\Tests\NoDoctrineKernel;
 use Sonata\UserBundle\Entity\BaseUser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -53,6 +55,8 @@ class ImplementationTest extends WebTestCase
 
         $this->assertSame([
             GenericEntity::class,
+            DefaultOverrideEntity::class,
+            OwnerEntity::class,
             BaseUser::class,
         ], $mappingDriver->getAllClassNames());
     }

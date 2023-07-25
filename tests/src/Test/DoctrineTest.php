@@ -15,14 +15,15 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Events;
 use Doctrine\ORM\Id\IdentityGenerator;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
-use Doctrine\ORM\Mapping\Driver\AttributeDriver;
 use Doctrine\ORM\Tools\SchemaTool;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\Mapping\Driver\MappingDriver;
 use Exception;
 use Neimheadh\SolidBundle\Doctrine\EventListener\Date\CreatedEntityListener;
 use Neimheadh\SolidBundle\Doctrine\EventListener\Date\UpdatedEntityListener;
+use Neimheadh\SolidBundle\Tests\Entity\DefaultOverrideEntity;
 use Neimheadh\SolidBundle\Tests\Entity\GenericEntity;
+use Neimheadh\SolidBundle\Tests\Entity\OwnerEntity;
 use Sonata\UserBundle\Entity\BaseUser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -160,6 +161,117 @@ class DoctrineTest extends WebTestCase
     }
 
     /**
+     * Test join fields are well implemented.
+     *
+     * @return void
+     * @throws Exception
+     */
+    public function testJoinFieldsImplementation(): void
+    {
+        $container = static::getContainer();
+
+        /** @var ManagerRegistry $doctrine */
+        $doctrine = $container->get('doctrine');
+        /** @var EntityManagerInterface $em */
+        $em = $doctrine->getManager('default');
+
+        /** @var ClassMetadataInfo $metadata */
+        $metadata = $doctrine->getManager('default')->getClassMetadata(
+            OwnerEntity::class
+        );
+        $this->assertTrue($metadata->hasField('isDefault'));
+        $this->assertSame([
+            'type' => 'boolean',
+            'length' => null,
+            'options' => ['default' => null],
+            'unique' => true,
+            'nullable' => true,
+            'fieldName' => 'isDefault',
+            'columnName' => 'isDefault',
+        ], $metadata->fieldMappings['isDefault']);
+
+        /** @var ClassMetadataInfo $metadata */
+        $metadata = $doctrine->getManager('default')->getClassMetadata(
+            DefaultOverrideEntity::class
+        );
+        $this->assertTrue($metadata->hasField('isDefault'));
+        $this->assertSame([
+            'fieldName' => 'isDefault',
+            'type' => 'boolean',
+            'scale' => null,
+            'length' => null,
+            'unique' => false,
+            'nullable' => true,
+            'precision' => null,
+            'options' => ['default' => null],
+            'columnName' => 'isDefault',
+        ], $metadata->fieldMappings['isDefault']);
+
+        // Test default system works with unit of work.
+        $concurrent = new OwnerEntity();
+        $concurrent->setIsDefault();
+        $em->persist($concurrent);
+        $owner = new OwnerEntity();
+        $owner->setIsDefault();
+        $em->persist($owner);
+        $generic = $this->newGenericEntity();
+        $em->persist($generic);
+        $em->flush();
+
+        $this->assertSame(1, $concurrent->getId());
+        $this->assertSame(2, $owner->getId());
+        $this->assertFalse($concurrent->isDefault());
+        $this->assertTrue($owner->isDefault());
+        $this->assertSame($owner, $generic->getOwner());
+
+        // Test auto-set works with empty manager uow.
+        $em->clear();
+        $default = new DefaultOverrideEntity();
+        $default->setIsDefault();
+        $em->persist($default);
+        $owner = $em->find(OwnerEntity::class, 2);
+        $concurrent = $em->find(OwnerEntity::class, 1);
+        $generic = $this->newGenericEntity();
+        $em->persist($generic);
+        $em->flush();
+        $this->assertSame($owner, $generic->getOwner());
+        $this->assertSame($default, $generic->getDefaultOverride());
+
+        $generic = $this->newGenericEntity();
+        $generic->setOwner($concurrent);
+        $em->persist($generic);
+        $em->flush();
+        $this->assertSame($concurrent, $generic->getOwner());
+
+
+        $default = new DefaultOverrideEntity();
+        $em->persist($default);
+        $em->flush();
+        $em->createQueryBuilder()
+            ->update(DefaultOverrideEntity::class, 'd')
+            ->set('d.isDefault', true)
+            ->getQuery()
+            ->execute();
+        $this->assertCount(
+            2,
+            $em->createQueryBuilder()
+                ->select(['d'])
+                ->from(DefaultOverrideEntity::class, 'd')
+                ->where('d.isDefault = :default')
+                ->getQuery()
+                ->execute(['default' => true])
+        );
+        $em->clear();
+        $generic = $this->newGenericEntity();
+        $em->persist($generic);
+        $em->flush();
+        $this->assertSame(
+            $em->find(DefaultOverrideEntity::class, 1),
+            $generic->getDefaultOverride(),
+        );
+    }
+
+    /**
      * Test SolidMetadataDriver.
      *
      * @return void
@@ -179,6 +291,8 @@ class DoctrineTest extends WebTestCase
         $this->assertSame(
             [
                 GenericEntity::class,
+                DefaultOverrideEntity::class,
+                OwnerEntity::class,
                 BaseUser::class,
             ],
             $metadataDriver->getAllClassNames(),
@@ -251,6 +365,8 @@ class DoctrineTest extends WebTestCase
         foreach (
             [
                 GenericEntity::class,
+                OwnerEntity::class,
+                DefaultOverrideEntity::class,
             ] as $entity
         ) {
             $metadata = $em->getClassMetadata($entity);

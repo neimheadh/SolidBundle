@@ -17,8 +17,10 @@ use Neimheadh\SolidBundle\Doctrine\Entity\Date\UpdatedEntityInterface;
 use Neimheadh\SolidBundle\Doctrine\Entity\Generic\DescribedEntityInterface;
 use Neimheadh\SolidBundle\Doctrine\Entity\Generic\NamedEntityInterface;
 use Neimheadh\SolidBundle\Doctrine\Entity\Index\UniquePrimaryEntityInterface;
+use Neimheadh\SolidBundle\Doctrine\Entity\Join\DefaultJointEntityInterface;
 use Neimheadh\SolidBundle\Doctrine\EventListener\Date\CreatedEntityListener;
 use Neimheadh\SolidBundle\Doctrine\EventListener\Date\UpdatedEntityListener;
+use Neimheadh\SolidBundle\Doctrine\EventListener\Join\DefaultJointEntityListener;
 use Neimheadh\SolidBundle\Exception\ConfigurationException;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
@@ -155,6 +157,21 @@ class DoctrineConfiguration implements ConfigurationInterface
                 'listeners' => [
                     Events::preUpdate => [
                         'class' => UpdatedEntityListener::class,
+                    ],
+                ],
+            ],
+        );
+
+        // Join fields.
+        $this->configure(
+            DefaultJointEntityInterface::class,
+            [
+                'columns' => [
+                    'isDefault' => [
+                        'type' => 'boolean',
+                        'unique' => true,
+                        'nullable' => true,
+                        'options' => ['default' => null],
                     ],
                 ],
             ],

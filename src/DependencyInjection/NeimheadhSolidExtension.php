@@ -10,8 +10,11 @@
 
 namespace Neimheadh\SolidBundle\DependencyInjection;
 
+use Exception;
+use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
+use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 
 /**
  * Neimheadh Solid Bundle extension.
@@ -31,6 +34,7 @@ class NeimheadhSolidExtension extends Extension
      */
     public function load(array $configs, ContainerBuilder $container): void
     {
+        $this->loadServices($configs, $container);
         $this->loadConfiguration($configs, $container);
     }
 
@@ -44,7 +48,7 @@ class NeimheadhSolidExtension extends Extension
      */
     private function loadConfiguration(
         array $configs,
-        ContainerBuilder $container
+        ContainerBuilder $container,
     ): void {
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
@@ -53,6 +57,29 @@ class NeimheadhSolidExtension extends Extension
             self::PARAMETER_CONFIG_DOCTRINE,
             $config['doctrine'],
         );
+    }
+
+    /**
+     * Load bundle services.
+     *
+     * @param array[]          $configs   Environment configurations.
+     * @param ContainerBuilder $container Application container.
+     *
+     * @return void
+     * @throws Exception
+     */
+    private function loadServices(
+        array $configs,
+        ContainerBuilder $container,
+    ): void {
+        $loader = new XmlFileLoader(
+            $container,
+            new FileLocator(
+                dirname(__DIR__, 2) . '/config',
+            ),
+        );
+
+        $loader->load('doctrine.xml');
     }
 
 }

@@ -37,4 +37,66 @@ class GenericEntity implements UniquePrimaryEntityInterface,
     use DescribedEntityTrait;
     use NamedEntityTrait;
     use DatedEntityTrait;
+
+    /**
+     * Default override test.
+     *
+     * @var DefaultOverrideEntity|null
+     */
+    #[ORM\ManyToOne(targetEntity: DefaultOverrideEntity::class)]
+    private ?DefaultOverrideEntity $defaultOverride = null;
+
+    /**
+     * Owner.
+     *
+     * @var OwnerEntity|null
+     */
+    #[ORM\ManyToOne(targetEntity: OwnerEntity::class)]
+    private ?OwnerEntity $owner = null;
+
+    /**
+     * Get default override.
+     *
+     * @return DefaultOverrideEntity|null
+     */
+    public function getDefaultOverride(): ?DefaultOverrideEntity
+    {
+        return $this->defaultOverride;
+    }
+
+    /**
+     * Get owner.
+     *
+     * @return OwnerEntity|null
+     */
+    public function getOwner(): ?OwnerEntity
+    {
+        return $this->owner;
+    }
+
+    /**
+     * Set default override.
+     *
+     * @param DefaultOverrideEntity|null $defaultOverride Default override.
+     *
+     * @return $this
+     */
+    public function setDefaultOverride(?DefaultOverrideEntity $defaultOverride
+    ): self {
+        $this->defaultOverride = $defaultOverride;
+        return $this;
+    }
+
+    /**
+     * Set owner.
+     *
+     * @param OwnerEntity|null $owner Owner.
+     *
+     * @return $this
+     */
+    public function setOwner(?OwnerEntity $owner): self
+    {
+        $this->owner = $owner;
+        return $this;
+    }
 }
